@@ -2,6 +2,7 @@ import whisper
 import json
 import os
 import json
+import jsonKeywordExtractor as jke
 
 
 # Load Whisper model (using 'base' model - you can change to 'tiny', 'small', 'medium', or 'large' for better accuracy)
@@ -18,6 +19,6 @@ print(result["text"])
 output_dir = "Output"
 os.makedirs(output_dir, exist_ok=True)
 
-
+jke.saveKeywordsToFile(output_dir + "/output.json", output_dir + "/outputKWE.json")
 # print(f"Transcription saved to {output_file}")
 # print(f"Transcribed text: {result['text']}")
