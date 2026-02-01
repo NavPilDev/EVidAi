@@ -13,12 +13,13 @@ audio_file = os.path.join("Input", "Parikrama.m4a")
 
 print("Transcribing audio file...")
 result = model.transcribe(audio_file, fp16=False)
-print(result["text"])
 
 # Create Output directory if it doesn't exist
 output_dir = "Output"
 os.makedirs(output_dir, exist_ok=True)
 
+# Extract keywords from the audio file
+print("Saving keywords to file...")
 jke.saveKeywordsToFile(output_dir + "/output.json", output_dir + "/outputKWE.json")
-# print(f"Transcription saved to {output_file}")
-# print(f"Transcribed text: {result['text']}")
+
+## Generate Video based on keywords
