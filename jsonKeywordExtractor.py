@@ -84,8 +84,7 @@ def saveKeywordsToFile(json_data, output_path):
     """
     Extract keywords from JSON data and save to output file.
     """
-    keywords_data = extractKeywords(json_data)
-
+    keywords_data = keywordsToTopics(extractKeywords(json_data))
     output_data = {
         "source_file": json_data,
         "total_segments": len(keywords_data),
@@ -97,6 +96,36 @@ def saveKeywordsToFile(json_data, output_path):
 
     print(f"Keywords extracted and saved to {output_path}")
     return output_data
+
+
+def keywordsToTopics(keywords_data):
+    """
+    Convert keywords into topic phrases for each sentence.
+    Creates meaningful topic labels by combining keywords.
+    """
+    for segment in keywords_data:
+        keywords = segment["keywords"]
+
+        if not keywords:
+            segment["topic"] = "General"
+            continue
+
+        # Strategy 1: Use the most significant keyword as base
+        # Strategy 2: Combine top 2-3 keywords into a phrase
+
+        if len(keywords) == 1:
+            topic = keywords[0].title()
+        elif len(keywords) >= 2:
+            # Combine top 2-3 keywords into a topic phrase
+            # Capitalize first letter of each word
+            topic_words = [word.title() for word in keywords[:3]]
+            topic = " ".join(topic_words)
+        else:
+            topic = "General"
+
+        segment["topic"] = topic
+
+    return keywords_data
 
 
 if __name__ == "__main__":
