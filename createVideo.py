@@ -12,6 +12,7 @@ import os
 import json
 from datetime import datetime
 from pexelsImageGen import getPhoto
+from PIL import Image
 # font_path = os.path.join("VideoMaterials", "fonts", "pjs.ttf")
 
 # txt_clip = (
@@ -19,6 +20,35 @@ from pexelsImageGen import getPhoto
 #     .with_duration(10)
 #     .with_position("center")
 # )
+
+
+def calculate_resize_dimensions(image_path, max_size):
+    """
+    Calculate resize dimensions for an image to fit within max_size while maintaining aspect ratio.
+
+    Args:
+        image_path: Path to the image file
+        max_size: Tuple of (max_width, max_height)
+
+    Returns:
+        Tuple of (new_width, new_height)
+    """
+    with Image.open(image_path) as img:
+        img_width, img_height = img.size
+        max_width, max_height = max_size
+
+    # Calculate scale factors for both dimensions
+    scale_width = max_width / img_width
+    scale_height = max_height / img_height
+
+    # Use the smaller scale factor to ensure image fits completely
+    scale = min(scale_width, scale_height)
+
+    # Calculate new dimensions
+    new_width = int(img_width * scale)
+    new_height = int(img_height * scale)
+
+    return (new_width, new_height)
 
 
 def generateVideo(clips):
@@ -44,36 +74,32 @@ def audioToVideo(
     # Determine duration
     if segment is not None:
         duration = segment["end"] - segment["start"]
-        image_clip = (
-            ImageClip(getPhoto(segment["topic"])).with_duration(duration).with_fps(fps)
+        image_path = getPhoto(segment["topic"])
+
+        # Calculate resize dimensions to fit within video size
+        resize_dimensions = calculate_resize_dimensions(image_path, size)
+
+        # Create image clip, resize it, set duration, and center it
+        image = (
+            ImageClip(image_path)
+            .resized(resize_dimensions)
+            .with_duration(duration)
+            .with_position(("center", "center"))
         )
-        # Resize image to fit within size while maintaining aspect ratio
-        # Calculate scaling factor to fit within target size
-        target_width, target_height = size
-        img_width, img_height = image_clip.size
 
-        # Calculate scale to fit within target dimensions
-        scale_w = target_width / img_width
-        scale_h = target_height / img_height
-        scale = min(scale_w, scale_h)  # Use smaller scale to fit within bounds
-
-        # Resize maintaining aspect ratio
-        new_width = int(img_width * scale)
-        new_height = int(img_height * scale)
-        image_clip = image_clip.resized((new_width, new_height))
-
-        # Center the image
-        image_clip = image_clip.with_position(("center", "center"))
+        # Create background video
+        background = ColorClip(size, color, duration=duration).with_fps(fps)
 
         # Create subclipped audio for this segment
         audio_clip = CompositeAudioClip(
             [audio_file_clip.subclipped(segment["start"], segment["end"])]
         )
-        # Add audio to the image clip
-        image_clip = image_clip.with_audio(audio_clip)
 
-        # Return the clip
-        return image_clip
+        # Composite background and image
+        video = CompositeVideoClip([background, image])
+        video.audio = audio_clip
+
+        return video
     else:
         if duration is None:
             duration = audio_file_clip.duration
