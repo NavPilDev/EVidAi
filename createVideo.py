@@ -6,10 +6,12 @@ from moviepy import (
     AudioFileClip,
     CompositeAudioClip,
     concatenate_videoclips,
+    ImageClip,
 )
 import os
 import json
 from datetime import datetime
+from pexelsImageGen import getPhoto
 # font_path = os.path.join("VideoMaterials", "fonts", "pjs.ttf")
 
 # txt_clip = (
@@ -42,24 +44,47 @@ def audioToVideo(
     # Determine duration
     if segment is not None:
         duration = segment["end"] - segment["start"]
+        image_clip = (
+            ImageClip(getPhoto(segment["topic"])).with_duration(duration).with_fps(fps)
+        )
+        # Resize image to fit within size while maintaining aspect ratio
+        # Calculate scaling factor to fit within target size
+        target_width, target_height = size
+        img_width, img_height = image_clip.size
+
+        # Calculate scale to fit within target dimensions
+        scale_w = target_width / img_width
+        scale_h = target_height / img_height
+        scale = min(scale_w, scale_h)  # Use smaller scale to fit within bounds
+
+        # Resize maintaining aspect ratio
+        new_width = int(img_width * scale)
+        new_height = int(img_height * scale)
+        image_clip = image_clip.resized((new_width, new_height))
+
+        # Center the image
+        image_clip = image_clip.with_position(("center", "center"))
+
         # Create subclipped audio for this segment
         audio_clip = CompositeAudioClip(
             [audio_file_clip.subclipped(segment["start"], segment["end"])]
         )
+        # Add audio to the image clip
+        image_clip = image_clip.with_audio(audio_clip)
+
+        # Return the clip
+        return image_clip
     else:
         if duration is None:
             duration = audio_file_clip.duration
         # Use full audio
         audio_clip = CompositeAudioClip([audio_file_clip])
-
-    # Create blank video (ColorClip doesn't accept fps parameter)
-    blank_video = ColorClip(size, color, duration=duration)
-    # Set fps after creation
-    blank_video = blank_video.with_fps(fps)
-
-    blank_video.audio = audio_clip
-
-    return blank_video
+        # Create blank video (ColorClip doesn't accept fps parameter)
+        video = ColorClip(size, color, duration=duration)
+        # Set fps after creation
+        video = video.with_fps(fps)
+        video.audio = audio_clip
+        return video
 
 
 def generateEvidAiVideo(audio_file, output_keywords_file, size):
