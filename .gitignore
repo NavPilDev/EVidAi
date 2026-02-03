@@ -1,6 +1,12 @@
-.env
-.venv
+server/.env
+server/.venv
 
-/input/
-/output/
-/savedDemos/
+server/input/
+server/output/
+server/savedDemos/
+
+client/node_modules/
+client/.next/
+client/out/
+client/build/
+client/package-lock.json
