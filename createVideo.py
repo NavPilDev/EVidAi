@@ -81,7 +81,7 @@ def audioToVideo(
 # Keyword-driven generation
 # -------------------------
 def generateEvidAiVideo(audio_file, output_keywords_file, size):
-    with open(output_keywords_file, "r") as f:
+    with open(output_keywords_file, "r", encoding="utf-8") as f:
         keywords_data = json.load(f)
 
     clips = []
@@ -99,12 +99,12 @@ def generateEvidAiVideo(audio_file, output_keywords_file, size):
 # -------------------------
 if __name__ == "__main__":
     size = (1080, 1920)
-    input_file = "Input/Parikrama.m4a"
+    input_file = "Input/Mid.mp3"
 
     clips = [
-        VideoFileClip("Input/Intro.MOV").with_volume_scaled(0.8),
+        VideoFileClip("Input/Intro.mp4").with_volume_scaled(0.8),
         *generateEvidAiVideo(input_file, "Output/outputKWE.json", size),
-        VideoFileClip("Input/Outro.MOV").with_volume_scaled(0.8),
+        VideoFileClip("Input/Outro.mp4").with_volume_scaled(0.8),
     ]
 
     generateVideo(clips)

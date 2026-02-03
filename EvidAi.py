@@ -9,10 +9,13 @@ import jsonKeywordExtractor as jke
 model = whisper.load_model("base")
 
 # Path to the audio file
-audio_file = os.path.join("Input", "Parikrama.m4a")
+audio_file = os.path.join("Input", "Mid.mp3")
 
 print("Transcribing audio file...")
 result = model.transcribe(audio_file, fp16=False)
+
+with open("Output/output.json", "w", encoding="utf-8") as f:
+    json.dump(result, f, indent=2, ensure_ascii=False)
 
 # Create Output directory if it doesn't exist
 output_dir = "Output"
