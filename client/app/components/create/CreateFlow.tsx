@@ -7,6 +7,9 @@ export function CreateFlow() {
     const [videoDescription, setVideoDescription] = useState('');
     const [audioFile, setAudioFile] = useState<File | null>(null);
     const [referenceImages, setReferenceImages] = useState<File[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
 
     const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -32,13 +35,49 @@ export function CreateFlow() {
         setReferenceImages(prev => [...prev, ...files]);
     };
 
-    const handleContinue = () => {
-        // TODO: Navigate to next step or submit form
-        console.log('Continue to Media Control', {
-            videoDescription,
-            audioFile,
-            referenceImages,
-        });
+    const handleContinue = async () => {
+        if (!audioFile) {
+            setSubmitError('Please upload an audio file');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setSubmitError(null);
+        setSubmitSuccess(false);
+
+        try {
+            // Create FormData object
+            const formData = new FormData();
+            formData.append('videoDescription', videoDescription);
+            formData.append('audioFile', audioFile);
+
+            // Append each reference image
+            referenceImages.forEach((img) => {
+                formData.append('referenceImages', img);
+            });
+
+            // Send POST request to backend
+            const response = await fetch('http://127.0.0.1:8080/api/create', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to create video' }));
+                throw new Error(errorData.message || `Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setSubmitSuccess(true);
+            console.log('Video creation initiated:', data);
+
+            // TODO: Navigate to next step or show success message
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setSubmitError(error instanceof Error ? error.message : 'Failed to submit form. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -189,15 +228,39 @@ export function CreateFlow() {
                         )}
                     </div>
 
+                    {/* Error Message */}
+                    {submitError && (
+                        <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                            {submitError}
+                        </div>
+                    )}
+
+                    {/* Success Message */}
+                    {submitSuccess && (
+                        <div className="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg text-sm">
+                            Video creation started successfully!
+                        </div>
+                    )}
+
                     {/* Continue Button */}
                     <div className="flex justify-end pt-4">
                         <button
                             onClick={handleContinue}
-                            disabled={!audioFile}
-                            className={`bg-[#7f22fe] text-[#171717] px-6 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity ${!audioFile ? 'opacity-50 cursor-not-allowed' : ''
+                            disabled={!audioFile || isSubmitting}
+                            className={`bg-[#7f22fe] text-[#171717] px-6 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2 ${!audioFile || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                         >
-                            Continue to Media Control
+                            {isSubmitting ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Submitting...
+                                </>
+                            ) : (
+                                'Continue to Media Control'
+                            )}
                         </button>
                     </div>
                 </div>
