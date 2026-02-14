@@ -26,24 +26,24 @@ export function Dashboard() {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch('http://127.0.0.1:8080/api/projects', {
+            const response = await fetch('http://127.0.0.1:8000/api/projects', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
                 throw new Error(errorData.error || `Server error: ${response.status}`);
             }
-            
+
             const data = await response.json();
             setProjects(data.projects || []);
         } catch (err) {
             console.error('Error fetching projects:', err);
             if (err instanceof TypeError && err.message.includes('fetch')) {
-                setError('Unable to connect to server. Please make sure the backend server is running on port 8080.');
+                setError('Unable to connect to server. Please make sure the backend server is running on port 8000.');
             } else {
                 setError(err instanceof Error ? err.message : 'Failed to load projects');
             }
@@ -66,11 +66,11 @@ export function Dashboard() {
             if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
             if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
             if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-            
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
             });
         } catch {
             return 'Unknown';
@@ -185,7 +185,7 @@ export function Dashboard() {
                                     <div className="relative w-full aspect-video bg-[#262626] overflow-hidden">
                                         {project.thumbnailUrl ? (
                                             <img
-                                                src={`http://127.0.0.1:8080${project.thumbnailUrl}`}
+                                                src={`http://127.0.0.1:8000${project.thumbnailUrl}`}
                                                 alt={project.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 onError={(e) => {
@@ -199,7 +199,7 @@ export function Dashboard() {
                                                 }}
                                             />
                                         ) : null}
-                                        <div 
+                                        <div
                                             className={`thumbnail-placeholder absolute inset-0 flex items-center justify-center ${project.thumbnailUrl ? 'hidden' : 'flex'}`}
                                         >
                                             <div className="bg-[rgba(38,38,38,0.5)] rounded-lg w-12 h-12 flex items-center justify-center">

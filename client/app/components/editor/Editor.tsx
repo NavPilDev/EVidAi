@@ -43,7 +43,7 @@ export function Editor({ projectId }: EditorProps) {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch(`http://127.0.0.1:8080/api/projects/${projectId}`);
+            const response = await fetch(`http://127.0.0.1:8000/api/projects/${projectId}`);
             
             if (!response.ok) {
                 if (response.status === 404) {
